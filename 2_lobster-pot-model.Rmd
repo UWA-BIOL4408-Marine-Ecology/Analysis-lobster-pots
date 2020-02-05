@@ -1,0 +1,412 @@
+---
+title: "BIOL4408 Marine Ecology: lobster pots 1."
+author: "TimLanglois"
+date: "09/01/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 2. Create Null lobster pot data
+
+
+Need to install a missing library
+```{r}
+# install.packages("sm")
+
+```
+
+
+
+Load some librarys
+```{r libs1, message=FALSE, warning=FALSE}
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(readr) #to write data
+library(here) #to make robust links to files
+# And you will need these libraries
+library(ggmap)
+library(argosfilter)
+library(sm)
+library(KernSmooth)
+
+```
+
+
+Write a function that will be useful later on - a general search and replace function
+```{r}
+gsr <- function(Source, Search, Replace) { 
+  if (length(Search) != length(Replace))     stop("Search and Replace Must Have Equal Number of Items\n") 
+  Changed <- as.character(Source)
+  for (i in 1:length(Search)) 
+  { 
+    cat("Replacing: ", Search[i], " With: ", Replace[i], "\n")
+    Changed <- replace(Changed, Changed == Search[i], Replace[i])   } 
+  cat("\n")   
+  Changed 
+}
+```
+
+
+
+
+
+It is useful to set a study name
+```{r name, message=FALSE, warning=FALSE}
+study<-"lobster.pots"
+```
+
+
+
+We are going to use the here() function, which creates a shortcut to your location.
+
+
+Check what the here() function returns in your environment? and adapt to suit
+
+Again - we have to use here::here() - due to conflict with plyr::here()
+```{r , message=FALSE, warning=FALSE}
+here::here()
+```
+
+If you are using an ecocloud server - you will probrably have to add folder names to the here() function 
+
+#here::here("workspace","Template-lobster-pots","Data")
+
+Let's make a shortcut to that "Data" directory.
+```{r here, message=FALSE, warning=FALSE}
+
+data.dir <- here::here("Data")
+
+#or for ecocloud
+
+#data.dir <- here::here("workspace","Template-lobster-pots","Data")
+```
+
+
+Let's make a plots directory and then shortcut to that directory.
+```{r here, message=FALSE, warning=FALSE}
+
+dir.create(file.path(here::here(), "Plots")) #create Data folder
+
+plot.dir <- here::here("Plots")
+
+#or for ecocloud
+#dir.create(file.path(here(), "workspace","Template-lobster-pots","Plots")) #create Data folder
+
+#data.dir <- here("workspace","Template-lobster-pots","Plots")
+```
+
+
+
+Read in pot data
+```{r warning=FALSE}
+setwd(data.dir)
+dat<-read_csv("lobster.pots.2019-01-23.csv")%>%
+  glimpse()
+
+```
+
+
+bring in more lobster pot data
+```{r}
+setwd(data.dir)
+
+lob.pot1<-read_csv("2018_Group1.csv")%>%
+  glimpse()
+
+
+lob.pot2<-read_csv("2018_Group2.csv")%>%
+  glimpse()
+
+
+
+
+
+```
+
+
+
+# Divide data between sanctuary locations----
+
+```{r}
+# Group 1 
+parker1<-lob.pot1[lob.pot1$X>115.51&lob.pot1$Y<(-32.015),]
+green1<-lob.pot1[lob.pot1$X<115.51&lob.pot1$Y<(-32.015)&lob.pot1$X>115.47,]
+armstrong1<-lob.pot1[lob.pot1$Y>(-32.005),]
+
+parker1=data.frame(parker1,"location"=c("parker"))
+green1=data.frame(green1,"location"=c("green"))
+armstrong1=data.frame(armstrong1,"location"=c("armstrong"))
+
+# Group 2
+parker2<-lob.pot2[lob.pot2$X>115.51&lob.pot2$Y<(-32.015),]
+green2<-lob.pot2[lob.pot2$X<115.51&lob.pot2$Y<(-32.015)&lob.pot2$X>115.47,]
+armstrong2<-lob.pot2[lob.pot2$Y>(-32.005),]
+
+
+parker2=data.frame(parker2,"location"=c("parker"))
+green2=data.frame(green2,"location"=c("green"))
+armstrong2=data.frame(armstrong2,"location"=c("armstrong"))
+
+
+lob.pot1.all<-rbind(parker1,green1,armstrong1)
+lob.pot2.all<-rbind(parker2,green2,armstrong2)
+
+```
+
+
+
+
+Insert the centre of each sanctuary
+```{r}
+
+lob.pot1.all$Sanctuary.centre.Lat<-lob.pot1.all$location
+lob.pot2.all$Sanctuary.centre.Lat<-lob.pot2.all$location
+
+lob.pot1.all$Sanctuary.centre.Long<-lob.pot1.all$location
+lob.pot2.all$Sanctuary.centre.Long<-lob.pot2.all$location
+
+
+Sanctuary.names<-c("armstrong","parker","green")
+Sanctuary.centre.Lat<-c("-31.98931","-32.02517","-32.02225")
+Sanctuary.centre.Long<-c("115.5086","115.5243","115.49755")
+
+
+```
+
+
+# Match up the lat and long
+```{r}
+
+lob.pot1.all$Sanctuary.centre.Long <- gsr(lob.pot1.all$Sanctuary.centre.Long, Sanctuary.names, Sanctuary.centre.Long)
+lob.pot1.all$Sanctuary.centre.Lat <- gsr(lob.pot1.all$Sanctuary.centre.Lat, Sanctuary.names, Sanctuary.centre.Lat)
+head(lob.pot1.all)
+
+
+lob.pot2.all$Sanctuary.centre.Long <- gsr(lob.pot2.all$Sanctuary.centre.Long, Sanctuary.names, Sanctuary.centre.Long)
+lob.pot2.all$Sanctuary.centre.Lat <- gsr(lob.pot2.all$Sanctuary.centre.Lat, Sanctuary.names, Sanctuary.centre.Lat)
+head(lob.pot2.all)
+
+lob.pot1.all$Sanctuary.centre.Lat<-(as.numeric(lob.pot1.all$Sanctuary.centre.Lat))
+lob.pot1.all$Sanctuary.centre.Long<-(as.numeric(lob.pot1.all$Sanctuary.centre.Long))
+
+lob.pot2.all$Sanctuary.centre.Lat<-(as.numeric(lob.pot2.all$Sanctuary.centre.Lat))
+lob.pot2.all$Sanctuary.centre.Long<-(as.numeric(lob.pot2.all$Sanctuary.centre.Long))
+```
+
+
+Use argosfilter() to find the distance by great circle route/curvature of the earth
+```{r warning=FALSE}
+# distance-Function distance calculates the distance, in km, between two geographical locations following the great circle route
+
+lob.pot1.all$distance<-distance(lat1=lob.pot1.all$Sanctuary.centre.Lat,lat2=lob.pot1.all$Y,lon1=lob.pot1.all$Sanctuary.centre.Long,lon2=lob.pot1.all$X)%>%
+  glimpse()
+
+
+lob.pot2.all$distance<-distance(lat1=lob.pot2.all$Sanctuary.centre.Lat,lat2=lob.pot2.all$Y,lon1=lob.pot2.all$Sanctuary.centre.Long,lon2=lob.pot2.all$X)%>%
+  glimpse()
+
+```
+
+
+# Create Null model for tests
+```{r}
+summary1<-plyr::ddply(lob.pot1.all,.(location), summarise,
+                Max = max(distance),
+                Min = min(distance),
+                Count = length(distance))%>%
+  glimpse()
+
+
+# Make Null datasets----
+# Group1
+armstrong1.m = data.frame(distance=seq(0.6655149,4.964157, length=354),
+                location="armstrong",
+                Model="NULL")
+
+green1.m = data.frame(distance=seq(0.3669323,2.416857, length=106),
+                   location="green",
+                Model="NULL")
+
+parker1.m = data.frame(distance=seq(0.4999049,3.081829, length=168),
+                      location="parker",
+                Model="NULL")
+
+
+
+summary2<-ddply(lob.pot2.all,.(location), summarise,
+                Max = max(distance),
+                Min = min(distance),
+                Count = length(distance))%>%
+  glimpse()
+
+# Group2
+armstrong2.m = data.frame(distance=seq(0.5877408,4.380596, length=394),
+                          location="armstrong",
+                          Model="NULL")
+
+green2.m = data.frame(distance=seq(0.5249063,2.522132, length=36),
+                      location="green",
+                      Model="NULL")
+
+parker2.m = data.frame(distance=seq(0.5155369,2.955497, length=84),
+                       location="parker",
+                       Model="NULL")
+
+
+lob.pot1.all$Model<-"Pots"
+
+lob.pot2.all$Model<-"Pots"
+
+keep<-c("distance","location","Model")
+lob.pot1.a<-lob.pot1.all[keep]
+lob.pot2.a<-lob.pot2.all[keep]
+```
+
+glimpse(dat)
+
+
+
+
+# Create Null using other data model for tests
+```{r}
+
+dat.pots<-dat%>%
+  dplyr::select(dst_sank,zone,lat,lon,year)%>%
+  mutate(Model="Pots")%>%
+  glimpse()
+
+summary1<-plyr::ddply(dat,.(zone), summarise,
+                Max = max(dst_sank),
+                Min = min(dst_sank),
+                Count = length(dst_sank))%>%
+  glimpse()
+
+
+# Make Null datasets----
+# Group1
+N = data.frame(dst_sank=seq(0,2403.4, length=3568),
+                zone="N",
+                Model="NULL")
+
+S = data.frame(dst_sank=seq(0,2264.77, length=970),
+                   zone="S",
+                Model="NULL")
+
+W = data.frame(dst_sank=seq(0,1637.92, length=195),
+                      zone="W",
+                Model="NULL")
+
+
+```
+
+
+
+
+
+# Combine observed and null datasets
+```{r}
+lob.pot1.all.null<-rbind(lob.pot1.a,armstrong1.m,green1.m,parker1.m)
+
+lob.pot2.all.null<-rbind(lob.pot2.a,armstrong2.m,green2.m,parker2.m)
+```
+
+
+
+# Combine observed and null datasets for other data
+this will create NA for lat,long,year
+```{r}
+
+dat.model<- dat.pots%>%
+  bind_rows(N,S,W)%>%
+  glimpse()
+
+```
+
+
+
+# View Null models
+Take note that this Null model assumes we have equal probrabilty of finding lobster (and pots) with increasing distance from the sanctuaries
+
+
+## Group 1
+```{r}
+
+Pots1<-ggplot(lob.pot1.all.null, aes(x=distance))+
+  geom_density(alpha=.5)+
+  ggtitle("Group 1")+
+  #   geom_histogram(aes(y=..density..))+
+  #   facet_wrap( ~ Nearest.Sanctuary,scales = "free",ncol = 2)
+  facet_grid( Model~ location,scales = "free")
+
+Pots1
+```
+
+
+## Group 2
+
+```{r}
+Pots2<-ggplot(lob.pot2.all.null, aes(x=distance))+
+  geom_density(alpha=.5)+
+  ggtitle("Group 2")+
+  #   geom_histogram(aes(y=..density..))+
+  #   facet_wrap( ~ Nearest.Sanctuary,scales = "free",ncol = 2)
+  facet_grid( Model~ location,scales = "free")
+
+Pots2
+```
+
+
+
+
+## Plot the observed and null
+```{r}
+
+ggplot(dat.model, aes(x=dst_sank))+
+  geom_density(alpha=.5)+
+  #   geom_histogram(aes(y=..density..))+
+  #   facet_wrap( ~ Nearest.Sanctuary,scales = "free",ncol = 2)
+  facet_grid( Model~ zone,scales = "free")
+
+
+```
+
+
+
+
+Save the data
+```{r}
+
+setwd(data.dir)
+
+write_csv(dat.model,"dat.model.csv")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Go back to [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
+
+Go forward to [2_lobster-pot-model](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/2_lobster-density_check-data.md)

@@ -1,0 +1,251 @@
+---
+title: "BIOL4408 Marine Ecology: lobster pots 1."
+author: "TimLanglois"
+date: "09/01/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 1. Import lobster pot data
+
+1. Import data - Tim has done tricky stuff in another script
+2. Plot and describe the data.
+
+
+
+Need to install a missing library
+```{r}
+# install.packages("ggmap")
+
+```
+
+
+
+Next we load some librarys
+```{r libs1, message=FALSE, warning=FALSE}
+library(tidyr) #to tidy data
+library(dplyr) #to transform data
+library(readr) #to write data
+library(ggplot2) #to plot data
+library(ggmap)
+library(readr) #to write data
+library(here) #to make robust links to files
+```
+
+It is useful to set a study name
+```{r name, message=FALSE, warning=FALSE}
+study<-"lobster.pots"
+```
+
+
+
+We are going to use the here() function, which creates a shortcut to your location.
+
+```{r , message=FALSE, warning=FALSE}
+here::here()
+```
+
+
+
+
+
+As long as the names on the folders are consistent this function will enable us to work across computers and operating systems.
+
+
+If you are using an ecocloud server - we will have to add folder names to the here() function - but this should work
+
+#here("workspace","Template-lobster-pots","Data")
+
+Let's make a shortcut to that "Data" directory.
+```{r , message=FALSE, warning=FALSE}
+
+data.dir <- here::here("Data")
+
+#or for ecocloud
+
+#data.dir <- here("workspace","Template-lobster-pots","Data")
+```
+
+
+Let's make a plots directory and then shortcut to that directory.
+```{r , message=FALSE, warning=FALSE}
+
+dir.create(file.path(here::here(), "Plots")) #create Data folder
+
+plot.dir <- here::here("Plots")
+
+#or for ecocloud
+#dir.create(file.path(here(), "workspace","Template-lobster-pots","Plots")) #create Data folder
+
+#data.dir <- here("workspace","Template-lobster-pots","Plots")
+```
+
+
+
+
+Read in polygons of NTR------
+```{r}
+
+setwd(data.dir)
+dir()
+ntr<-read_csv("ntr.2019-01-23.csv")%>%
+  glimpse()
+
+```
+
+
+
+
+Read in pot data
+```{r}
+setwd(data.dir)
+dat<-read_csv("lobster.pots.2019-01-23.csv")%>%
+  glimpse()
+
+```
+
+
+
+
+
+## Basic plots to check the data
+
+
+# Get map of Rottnest
+
+```{r}
+# Bounding box
+bbox <- c(115.435,-32.04,  115.57,-31.975)
+
+# make the map
+rotto.map<-(get_stamenmap(as.vector(bbox), zoom = 14, maptype="terrain"))
+
+ggmap(rotto.map)
+
+
+```
+
+
+
+
+Plot all of pots
+
+```{r}
+
+ggmap(rotto.map)+
+  geom_point(aes(lon,lat),size=2,colour="Yellow",data=dat, alpha=0.25)+
+  xlab('Longitude')+
+  ylab('Lattitude')
+
+```
+
+
+
+Plot of all pots with NTZs
+
+```{r}
+ggmap(rotto.map)+
+  geom_point(aes(lon,lat,colour="red"),size=1,data=dat, alpha=0.25,show.legend = F)+
+  geom_polygon(data = fortify(ntr%>%filter(lon<115.48)), aes(lon, lat, group = group), colour = "green", fill="orange",alpha = 0.5) +
+  geom_polygon(data = fortify(ntr%>%filter(lon>115.48)), aes(lon, lat, group = group), colour = "green", fill="green",alpha = 0.25) +
+xlab('Longitude')+
+  ylab('Lattitude')
+
+```
+
+
+Plot of all pots faceted by year with NTRs
+
+```{r}
+ggmap(rotto.map)+
+  geom_point(aes(lon,lat,colour="red"),size=1,data=dat, alpha=0.25,show.legend = F)+
+  # geom_polygon(data = fortify(ntr), aes(lon, lat, group = group), colour = "green", fill="orange",alpha = 0.5) +
+  
+  geom_polygon(data = fortify(ntr%>%filter(lon<115.48)), aes(lon, lat, group = group), colour = "green", fill="orange",alpha = 0.5) +
+  geom_polygon(data = fortify(ntr%>%filter(lon>115.48)), aes(lon, lat, group = group), colour = "green", fill="green",alpha = 0.25) +
+
+  theme(axis.text=element_blank(),
+        
+        axis.title=element_blank(),
+        axis.ticks=element_blank())+
+  facet_wrap(~year,ncol=2)
+
+```
+
+
+
+
+
+## The pot data I have provided contains several 
+Explore the pot distribution within different zones of the island with different metrics
+To look for general patterns
+
+# Plot with distance to NTR boundary
+
+```{r}
+unique(dat$zone)
+
+ggplot(data=dat%>%filter(!zone=="W"), aes(x=dst_sank))+
+  geom_density(alpha=.5)+
+  facet_grid( .~ zone)+
+  theme_classic()+
+  xlab('Distance to sanctuary (m)')+
+  ylab('Density')
+```
+
+
+Plot with depth - check out my labeller!
+```{r}
+
+labels <- c(N = "North", S = "South", W = "West")
+
+ggplot(data=dat, aes(x=depth))+
+  geom_density(alpha=.5)+
+  facet_grid( .~ zone,labeller=labeller(zone = labels))
+
+```
+
+
+Plot with distance to jetties
+```{r}
+ggplot(data=dat, aes(x=dst_jettie))+
+  geom_density(alpha=.5)+
+  facet_grid( .~ zone,labeller=labeller(zone = labels))
+```
+
+
+Plot with distance to moorings
+```{r}
+ggplot(data=dat, aes(x=dst_moorin))+
+  geom_density(alpha=.5)+
+  facet_grid( .~ zone,labeller=labeller(zone = labels))
+
+```
+
+
+
+
+Plot with distance to coast
+```{r}
+pot.cst.hist<-ggplot(data=dat, aes(x=dst_cst))+
+  geom_density(alpha=.5)+
+  facet_grid( .~ zone,labeller=labeller(zone = labels))
+pot.cst.hist
+```
+
+
+
+
+
+
+
+
+
+
+Go back to [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
+
+Go forward to [2_lobster-pot-model](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/2_lobster-density_check-data.md)

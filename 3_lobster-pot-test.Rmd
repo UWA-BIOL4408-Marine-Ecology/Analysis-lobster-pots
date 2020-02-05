@@ -1,0 +1,136 @@
+---
+title: "BIOL4408 Marine Ecology: lobster pots 1."
+author: "TimLanglois"
+date: "09/01/2020"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# 3. Test lobster pot data
+
+1. Test null against observed
+
+
+Need to install a missing library
+```{r}
+# install.packages("sm")
+
+```
+
+
+Load some librarys
+```{r libs1, message=FALSE, warning=FALSE}
+library(tidyr)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(readr) #to write data
+library(here) #to make robust links to files
+# And you will need these libraries
+library(ggmap)
+library(sm)
+library(KernSmooth)
+
+```
+
+
+Source function
+# See Langlois et al. 2012 PLoS ONE for details and information on the method
+# To test for each Sanctuary by changing the subset
+```{r}
+source("1_Load function KDE.R")
+```
+
+
+It is useful to set a study name
+```{r name, message=FALSE, warning=FALSE}
+study<-"lobster.pots"
+```
+
+
+Again - we have to use here::here() - due to conflict with plyr::here()
+```{r , message=FALSE, warning=FALSE}
+here::here()
+```
+
+If you are using an ecocloud server - you will probrably have to add folder names to the here() function 
+
+#here::here("workspace","Template-lobster-pots","Data")
+
+Let's make a shortcut to that "Data" directory.
+```{r here, message=FALSE, warning=FALSE}
+
+data.dir <- here::here("Data")
+
+#or for ecocloud
+
+#data.dir <- here::here("workspace","Template-lobster-pots","Data")
+```
+
+
+Let's make a plots directory and then shortcut to that directory.
+```{r , message=FALSE, warning=FALSE}
+
+dir.create(file.path(here::here(), "Plots")) #create Data folder
+
+plot.dir <- here::here("Plots")
+
+#or for ecocloud
+#dir.create(file.path(here(), "workspace","Template-lobster-pots","Plots")) #create Data folder
+
+#data.dir <- here("workspace","Template-lobster-pots","Plots")
+```
+
+
+
+Read in pot model data and rename to match fields required by function
+```{r warning=FALSE}
+setwd(data.dir)
+dat.model<-read_csv("dat.model.csv")%>%
+   dplyr::select("dst_sank","zone","Model")%>%
+  dplyr::rename(distance = dst_sank,
+                location = zone)%>%
+  glimpse()
+
+
+```
+
+
+Run the KDE tests
+# KDE test----
+#Test of distribution - this will generate a P value and a plot
+# See Langlois et al. 2012 PLoS ONE for details and information on the method
+# To test for each zone by changing the subset
+
+North
+```{r message=TRUE, paged.print=TRUE}
+
+WF(filter(dat.model,location=="N"),50,'Model')
+
+```
+
+
+South
+```{r}
+
+WF(filter(dat.model,location=="S"),50,'Model')
+
+```
+
+
+West
+```{r}
+
+WF(filter(dat.model,location=="W"),50,'Model')
+
+```
+
+
+
+
+
+Go back to [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
