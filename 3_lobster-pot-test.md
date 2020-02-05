@@ -144,5 +144,4 @@ WF(filter(dat.model,location=="W"),50,'Model')
 
 ![](3_lobster-pot-test_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
-Go back to
 [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)

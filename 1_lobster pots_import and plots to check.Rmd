@@ -242,10 +242,7 @@ pot.cst.hist
 
 
 
+[Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
 
 
-
-
-Go back to [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
-
-Go forward to [2_lobster-pot-model](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/2_lobster-density_check-data.md)
+[2_lobster-pot-make-null](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/2_lobster-pot-null.md)

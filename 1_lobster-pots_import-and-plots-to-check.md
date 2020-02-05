@@ -357,8 +357,6 @@ pot.cst.hist
 
 ![](1_lobster-pots_import-and-plots-to-check_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
-Go back to
 [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
 
-Go forward to
-[2\_lobster-pot-model](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/2_lobster-density_check-data.md)
+[2\_lobster-pot-make-null](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/2_lobster-pot-null.md)

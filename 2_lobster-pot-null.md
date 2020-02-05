@@ -235,8 +235,6 @@ setwd(data.dir)
 write_csv(dat.model,"dat.model.csv")
 ```
 
-Go back to
 [Analysis-lobster-pots](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/README.md)
 
-Go forward to
-[2\_lobster-pot-model](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-density/blob/master/2_lobster-density_check-data.md)
+[3\_lobster-pot-test](https://github.com/UWA-BIOL4408-Marine-Ecology/Analysis-lobster-pots/blob/master/3_lobster-pot-test.md)
